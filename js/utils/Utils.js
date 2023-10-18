@@ -32,10 +32,11 @@ function test_mesh_to_shape(mesh){
 
     }else if(sphere_pattern.test(mesh.name)){
         shape = new CANNON.Sphere(mesh.scale.x,6,6);
-    }
-    else{
+    }else if(cylinder_pattern.test(mesh.name)){
         console.log("Cylinder x,z : ",mesh.scale);
         shape = new CANNON.Cylinder(mesh.scale.x, mesh.scale.x, mesh.scale.y, 6);
+    }else{
+        shape = mesh_to_shape(mesh);
     }
     return shape;
 }

@@ -14,13 +14,13 @@ import World from './js/World';
 import Player from './js/Player';
 import { update_delta_time } from './js/Time';
 
-const SHOW_PHY_DEBUG = true;
+const SHOW_PHY_DEBUG = false;
 
 let listener,world,player;
 
 const menu_panel = document.getElementById('menuPanel');
 const start_button = document.getElementById('startButton');
-
+const hint_text = document.getElementById('hint-text');
 // Create a renderer
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -60,7 +60,7 @@ const clock = new THREE.Clock();
 
 //Cannon Physics World
 const physics_world = new CANNON.World();
-physics_world.gravity.set(0, -20, 0); 
+physics_world.gravity.set(0, -9.82, 0); 
 
 //Physics Handling
 const physics_handler = new PhysicsHandler();
@@ -88,30 +88,29 @@ start_button.addEventListener(
 )
 
 //Testing
-const plane = new CANNON.Body({
-    mass : 0,
-    position : new CANNON.Vec3(0,1,0),
-    shape : new CANNON.Plane()
-});
-plane.quaternion.setFromEuler(-Math.PI/2,0,0);
-physics_world.addBody(plane);
+// const plane = new CANNON.Body({
+//     mass : 0,
+//     position : new CANNON.Vec3(0,0,0),
+//     shape : new CANNON.Plane()
+// });
+// plane.quaternion.setFromEuler(-Math.PI/2,0,0);
+// physics_world.addBody(plane);
 
-const box = new CANNON.Body({
-    mass : 0,
-    position : new CANNON.Vec3(4,2,4),
-});
+// const box = new CANNON.Body({
+//     mass : 0,
+//     position : new CANNON.Vec3(4,2,4),
+// });
 
+// const shape_1 =  new CANNON.Box(new CANNON.Vec3(1,1,1));
+// const pos_1 = new CANNON.Vec3(-5,0,5);
 
-const shape_1 =  new CANNON.Box(new CANNON.Vec3(1,1,1));
-const pos_1 = new CANNON.Vec3(-5,0,5);
+// const shape_2 =  new CANNON.Box(new CANNON.Vec3(1,1,1));
+// const pos_2 = new CANNON.Vec3(-5,0,2);
 
-const shape_2 =  new CANNON.Box(new CANNON.Vec3(1,1,1));
-const pos_2 = new CANNON.Vec3(-5,0,2);
+// box.addShape(shape_1,pos_1);
+// box.addShape(shape_2,pos_2);
 
-box.addShape(shape_1,pos_1);
-box.addShape(shape_2,pos_2);
-
-physics_world.addBody(box);
+// physics_world.addBody(box);
 
 fps_controls.addEventListener('lock', () => (menu_panel.style.display = 'none'));
 fps_controls.addEventListener('unlock', () => (menu_panel.style.display = 'block'));
@@ -129,7 +128,7 @@ async function start_web(){
     event_emitter.on('update',world.update_objects.bind(world));
 
     //Player
-    player = new Player(physics_world,fps_camera,new CANNON.Vec3(0,10,2));
+    player = new Player(physics_world,fps_camera,new CANNON.Vec3(0,5,2));
     player.create_input_events(document);
 
     //testing 
@@ -230,5 +229,7 @@ function switch_cam(){
         menu_panel.style.display = 'none';
     }
 }
+
+
 // Call the animate function to start the animation loop
 animate();

@@ -33,38 +33,21 @@ const models = [
         collider : true,
     },
     {
-        name : 'boombox',
+        name : 'boom_box',
         model : true,
-        collider : false,
+        collider : true,
+    },
+    {
+        name : 'house',
+        model : true,
+        collider : true
+    },{
+        name : 'props',
+        model : true,
+        collider : true,
     }
 ]
-// const models = [
-//     {
-//         name : 'ocean',
-//         model : true,
-//         collider : false,
-//     },
-//     {
-//         name : 'beach',
-//         model : true,
-//         collider : true,
-//     },
-//     {
-//         name : 'small_tower',
-//         model : true,
-//         collider : true,
-//     },
-//     {
-//         name : 'watch_tower',
-//         model : true,
-//         collider : true,
-//     },
-//     {
-//         name : 'player',
-//         model : false,
-//         collider : true,
-//     }
-// ]
+
 const loaded_models= {}
 const loaded_colliders= {}
 

@@ -9,7 +9,7 @@ export default class AudioSource{
         this.current_song_index = 0;
         this.loop = false;
         this.song.setRefDistance(20);
-        // this.play();
+        this.is_playing = false;
     }
     next_song(){
         this.current_song_index = ++this.current_song_index % AudioHandler.SONG_COUNT;
@@ -41,7 +41,11 @@ export default class AudioSource{
     stop(){
         this.song.stop();
     }
-    
+    switch_play(){
+        this.is_playing = !this.is_playing;
+        if(this.is_playing) this.play();
+        else this.stop();
+    }
     seek(percentage){
     
     }

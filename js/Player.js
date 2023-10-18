@@ -8,7 +8,7 @@ import { delta_time } from "./Time";
 import { interactable_objects } from './Handler';
 
 const player_cam_offset = new CANNON.Vec3(0, 2, 0);
-const player_reach = 2;
+const player_reach = 3;
 
 
 export default class Player{
@@ -17,7 +17,7 @@ export default class Player{
         this.player_cam = player_cam;
         this._vector = new CANNON.Vec3();
         this.moving = false;
-        this.move_speed = 1500;
+        this.move_speed = 750;
         this.ray_caster = new THREE.Raycaster();
         this.ray_caster.far = player_reach;
         this.audio_listener = new THREE.AudioListener();
@@ -25,7 +25,7 @@ export default class Player{
         this.rb = create_rb(
             get_collider(this.model_name),
             {
-                mass : 75,
+                mass : 50,
                 position: position,
                 quaternion : quaternion,
                 type : CANNON.Body.DYNAMIC,
@@ -34,6 +34,8 @@ export default class Player{
         );
         physics_world.addBody(this.rb);
         PhysicsHandler.get_instance().add_physics_object(this);
+        this.is_interactable = false
+        this.interactable_object = null
     }
     create_input_events(document){
         document.addEventListener('keydown', this.on_key_down, false)
@@ -65,6 +67,9 @@ export default class Player{
             case 'KeyD' || 'up':
                 this.move_left(-1);
                 break;
+            case 'KeyY':
+                this.interact_with_object();
+                break;
             default:
                 this.moving = false;
         }
@@ -92,12 +97,27 @@ export default class Player{
         
         this.ray_caster.set(origin,cam_direction);
 
-        const intersections = this.ray_caster.intersectObjects(interactable_objects, true);
+        const interactable_models = interactable_objects.map(obj => obj.model);
+        const intersections = this.ray_caster.intersectObjects(interactable_models, true);
 
         if(intersections.length > 0){
-            const first_intersection = intersections[0];
-            console.log("Working");
+            const first_interacted_model = intersections[0].object;
+            this.interactable_object = interactable_objects.find(obj => obj.model === this.get_model_from_mesh(first_interacted_model));
+            this.is_interactable = true;    
+            this.interactable_object.on_hover();
         }
+        else{
+            if(this.interactable_object){
+                this.interactable_object.on_exit();
+                this.interactable_object = null;
+            }
+            this.is_interactable = false;
+        }
+    }
+
+    get_model_from_mesh(mesh){
+        if(mesh.name == "Scene") return mesh;
+        else return this.get_model_from_mesh(mesh.parent);
     }
     move_forward(direction) {
  
@@ -127,4 +147,13 @@ export default class Player{
         this.rb.velocity.z = - world_velocity.z;
 
 	}
+    interact_with_object(){
+        // console.log("Is Interactable : ",this.is_interactable," Object : ", this.interactable_object);
+        if(!this.is_interactable) return false;
+
+        if(this.interactable_object){
+            console.log(this.interactable_object);
+            this.interactable_object.on_interact();
+        }
+    }
 }

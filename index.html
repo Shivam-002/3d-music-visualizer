@@ -4,38 +4,15 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>3D Music Visualizer</title>
-        <style>
-            body {
-                overflow: hidden;
-                margin: 0px;
-            }
-
-            #menuPanel {
-                position: absolute;
-                background-color: rgba(255, 255, 255, 0.5);
-                top: 0px;
-                left: 0px;
-                width: 100%;
-                height: 100%;
-            }
-
-            #startButton {
-                height: 50px;
-                width: 200px;
-                margin: -25px -100px;
-                position: relative;
-                top: 50%;
-                left: 50%;
-                font-size: 32px;
-            }
-        </style>
+        <link rel="stylesheet" type="text/css" href="index.css" />
     </head>
 
     <body>
         <div id="menuPanel">
             <button id="startButton">Click to Start</button>
         </div>
-        <div id="canvas-container"></div>
+        <div id="canvas-container"><div id="hint-text">Your hint text here</div></div>
+
         <script src="index.js" type="module"></script>
     </body>
 </html>
