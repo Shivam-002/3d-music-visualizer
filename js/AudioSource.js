@@ -8,8 +8,9 @@ export default class AudioSource{
         this.model.add(this.song);
         this.current_song_index = 0;
         this.loop = false;
-        this.song.setRefDistance(20);
+        this.song.setRefDistance(10);
         this.is_playing = false;
+        this.song.setVolume(.1);
     }
     next_song(){
         this.current_song_index = ++this.current_song_index % AudioHandler.SONG_COUNT;
@@ -29,6 +30,9 @@ export default class AudioSource{
                 this.song.play();
             }
         );
+    }
+    start(){
+        this.song.start(0);
     }
     play(){
         AudioHandler.load_song(

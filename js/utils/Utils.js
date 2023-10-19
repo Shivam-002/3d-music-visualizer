@@ -17,7 +17,7 @@ export default function create_rb(model,rb_config){
             const quaternion = new CANNON.Quaternion(mesh.quaternion.x, mesh.quaternion.y, mesh.quaternion.z, mesh.quaternion.w);
             
             rb.addShape(shape,position,quaternion);
-            console.log("Shape Position ",mesh.name," ",mesh.position);
+            // console.log("Shape Position ",mesh.name," ",mesh.position);
         }
     });
 
@@ -33,7 +33,7 @@ function test_mesh_to_shape(mesh){
     }else if(sphere_pattern.test(mesh.name)){
         shape = new CANNON.Sphere(mesh.scale.x,6,6);
     }else if(cylinder_pattern.test(mesh.name)){
-        console.log("Cylinder x,z : ",mesh.scale);
+        // console.log("Cylinder x,z : ",mesh.scale);
         shape = new CANNON.Cylinder(mesh.scale.x, mesh.scale.x, mesh.scale.y, 6);
     }else{
         shape = mesh_to_shape(mesh);

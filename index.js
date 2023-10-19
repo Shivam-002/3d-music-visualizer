@@ -5,14 +5,20 @@ import * as CANNON from "cannon-es";
 // import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { Sky } from 'three/addons/objects/Sky.js';
 import CannonDebugger from 'cannon-es-debugger';
 import Stats from 'stats.js';
 import PhysicsHandler from './js/PhysicsHandler';
-import load_all_models, { get_collider, get_model } from './js/utils/modelloader';
+import load_all_models from './js/utils/modelloader';
 import EventEmitter from './js/utils/EventEmitter'; 
 import World from './js/World';
 import Player from './js/Player';
 import { update_delta_time } from './js/Time';
+import { get_skybox_mesh } from './js/Skybox';
 
 const SHOW_PHY_DEBUG = false;
 
@@ -23,8 +29,10 @@ const start_button = document.getElementById('startButton');
 const hint_text = document.getElementById('hint-text');
 // Create a renderer
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000, 1);
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.5;
 
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
@@ -87,6 +95,30 @@ start_button.addEventListener(
     false
 )
 
+// const params = {
+//     exposure: 1,
+//     bloomStrength: .3,
+//     bloomThreshold: 0,
+//     bloomRadius: .1,
+// };
+// const render_scene = new RenderPass( scene, fps_camera );
+// const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+// bloomPass.threshold = params.bloomThreshold;
+// bloomPass.strength = params.bloomStrength;
+// bloomPass.radius = params.bloomRadius;
+
+// const outputPass = new OutputPass();
+
+// // var copyPass = new ShaderPass( CopyShader );
+// // copyPass.renderToScreen = true;
+
+// const composer = new EffectComposer( renderer );
+// composer.addPass( render_scene );
+// composer.addPass( bloomPass );
+// composer.addPass( outputPass );
+// // composer.addPass( copyPass );
+
+// renderer.toneMappingExposure = Math.pow( 2, 4.0 );
 //Testing
 // const plane = new CANNON.Body({
 //     mass : 0,
@@ -162,8 +194,6 @@ async function start_web(){
 }
 
 
-
-
 function onWindowResize() {
     fps_camera.aspect = window.innerWidth / window.innerHeight;
     orbital_camera.aspect = window.innerWidth / window.innerHeight;
@@ -173,12 +203,12 @@ function onWindowResize() {
     render();
 }
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // Color: white, Intensity: 1
-directionalLight.position.set(1, 1, 1); // Set the light's direction
-scene.add(directionalLight);
+// const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // Color: white, Intensity: 1
+// directionalLight.position.set(1, 1, 1); // Set the light's direction
+// scene.add(directionalLight);
 
 const ambientLight = new THREE.AmbientLight(0x404040); 
-ambientLight.intensity = 20;
+ambientLight.intensity = 10;
 scene.add(ambientLight);
 
 // const skybox = get_skybox_mesh("bluecloud");
@@ -203,6 +233,7 @@ function animate () {
     
     event_emitter.emit('update');
 
+    // composer.render();
     render();
     stats.end();
 }
@@ -229,6 +260,9 @@ function switch_cam(){
         menu_panel.style.display = 'none';
     }
 }
+
+
+
 
 
 // Call the animate function to start the animation loop

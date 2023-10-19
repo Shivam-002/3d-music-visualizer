@@ -1,8 +1,7 @@
 import * as CANNON from "cannon-es";
 import create_rb from "../utils/Utils";
 import { get_collider, get_model } from "../utils/modelloader";
-import { add_interactable_objects } from "../Handler";
-import AudioSource from "../AudioSource";
+
 
 
 export default class SmallTower {
@@ -16,7 +15,7 @@ export default class SmallTower {
                 mass : 50000,
                 position: position,
                 quaternion : quaternion,
-                type : CANNON.Body.DYNAMIC
+                type : CANNON.Body.STATIC
             }
         );        
     }

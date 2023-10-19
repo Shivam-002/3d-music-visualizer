@@ -6,9 +6,6 @@ export default class Beach {
     constructor(position=CANNON.Vec3.ZERO,quaternion=CANNON.Quaternion.ZERO){
         this.model_name = "beach";
         this.model = get_model(this.model_name);
-
-        const zeroRestitutionMaterial = new CANNON.Material('zeroRestitutionMaterial');
-        zeroRestitutionMaterial.restitution = 0;
         this.rb = create_rb(
             get_collider(this.model_name),
             {
@@ -26,6 +23,6 @@ export default class Beach {
     }
 
     update(){
-        console.log("Beach Pos " , this.rb.position);
+
     }
 }

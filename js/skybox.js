@@ -20,7 +20,7 @@ function get_skybox_files(folder_name) {
 function get_texture_array(folder_name) {
     const skybox_files = get_skybox_files(folder_name);
     const texture_array = skybox_files.map(file => {
-        let texture = new THREE.TextureLoader().load(file);
+        const texture = new THREE.TextureLoader().load(file);
         return texture;
     });
     return texture_array;
@@ -29,7 +29,7 @@ function get_texture_array(folder_name) {
 function get_skybox_mesh(folder_name) {
 
   const texture_array = get_texture_array(folder_name);
-  const skybox_geometry = new THREE.BoxGeometry(10000, 10000, 10000);
+  const skybox_geometry = new THREE.BoxGeometry(10, 10, 10);
   return new THREE.Mesh(skybox_geometry, texture_array);
 }
 

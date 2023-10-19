@@ -10,7 +10,6 @@ import { interactable_objects } from './Handler';
 const player_cam_offset = new CANNON.Vec3(0, 2, 0);
 const player_reach = 3;
 
-
 export default class Player{
     constructor(physics_world,player_cam,position=CANNON.Vec3.ZERO,quaternion=CANNON.Quaternion.ZERO){
         this.model_name = "player";
@@ -34,8 +33,11 @@ export default class Player{
         );
         physics_world.addBody(this.rb);
         PhysicsHandler.get_instance().add_physics_object(this);
-        this.is_interactable = false
-        this.interactable_object = null
+        this.is_interactable = false;
+        this.interactable_object = null;
+
+        console.log("Player : ", this);
+        this.last_quat = this.player_cam.quaternion;
     }
     create_input_events(document){
         document.addEventListener('keydown', this.on_key_down, false)
@@ -76,18 +78,18 @@ export default class Player{
     }
     
     fixed_update(){
-        // console.log(delta_time);
 
         this.handle_interactions();
 
         this.player_cam.position.copy(this.rb.position.vadd(player_cam_offset));
-        // this.rb.quaternion.copy(this.player_cam.quaternion);
+        this.rb.quaternion.copy(this.player_cam.quaternion);
 
         const playerQuaternion = this.rb.quaternion;
         const cameraQuaternion = this.player_cam.quaternion;
 
-        // Copy the x and z axes from the camera's quaternion to the player's quaternion
         playerQuaternion.y = cameraQuaternion.y;
+
+
 
     }
 

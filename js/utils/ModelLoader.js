@@ -41,8 +41,19 @@ const models = [
         name : 'house',
         model : true,
         collider : true
-    },{
+    },
+    {
         name : 'props',
+        model : true,
+        collider : true,
+    },
+    {
+        name : 'sun',
+        model : true,
+        collider : true,
+    },
+    {
+        name : 'speaker',
         model : true,
         collider : true,
     }
@@ -64,6 +75,7 @@ export default async function load_all_models(){
         }
     }
     console.log(loaded_models);
+    console.log(loaded_colliders);
 }
 
 async function load_model(model_name) {

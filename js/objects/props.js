@@ -26,7 +26,5 @@ export default class Props {
     }
     update(){
 
-        this.model.position.copy(this.rb.position);
-        this.model.quaternion.copy(this.rb.quaternion);
     }
 }
