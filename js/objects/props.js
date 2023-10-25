@@ -9,8 +9,9 @@ export default class Props {
         this.model_name = "props";
         this.model = get_model(this.model_name);
         this.model.position.set(position.x,position.y,position.z);
+        const collider = get_collider(this.model_name);
         this.rb = create_rb(
-            get_collider(this.model_name),
+            collider,
             {
                 mass : 500,
                 position: position,

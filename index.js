@@ -2,13 +2,8 @@ import * as THREE from 'three';
 import * as CANNON from "cannon-es";
 
 
-// import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import CannonDebugger from 'cannon-es-debugger';
 import Stats from 'stats.js';
@@ -18,18 +13,23 @@ import EventEmitter from './js/utils/EventEmitter';
 import World from './js/World';
 import Player from './js/Player';
 import { update_delta_time } from './js/Time';
-import { get_skybox_mesh } from './js/Skybox';
 
 const SHOW_PHY_DEBUG = false;
 
-let listener,world,player;
+let listener,world,player,last_call_time,render_target;
 
 const menu_panel = document.getElementById('menuPanel');
 const start_button = document.getElementById('startButton');
-const hint_text = document.getElementById('hint-text');
+
 // Create a renderer
-const renderer = new THREE.WebGLRenderer();
-renderer.setPixelRatio( window.devicePixelRatio );
+const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    powerPreference: "high-performance",
+});
+
+//Renderer Configs
+const resolution = 1;
+renderer.setPixelRatio( window.devicePixelRatio * resolution );
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.5;
@@ -39,7 +39,7 @@ document.getElementById('canvas-container').appendChild(renderer.domElement);
 // Create a scene
 const scene = new THREE.Scene();
 
-// Create camera's
+// Create cameras
 const fps_camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const orbital_camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 var is_fps_active = true;
@@ -63,12 +63,10 @@ var stats = new Stats();
 stats.showPanel(0); 
 document.body.appendChild(stats.dom);
 
-//Clock
-const clock = new THREE.Clock();
-
 //Cannon Physics World
 const physics_world = new CANNON.World();
 physics_world.gravity.set(0, -9.82, 0); 
+last_call_time = performance.now() / 1000;
 
 //Physics Handling
 const physics_handler = new PhysicsHandler();
@@ -77,7 +75,7 @@ physics_handler.set_physics_world(physics_world);
 //Physics Debugger
 const cannon_debugger = new CannonDebugger(scene, physics_world);
 
-//Event Handling
+//Events
 const event_emitter = new EventEmitter();
 
 start_button.addEventListener(
@@ -91,158 +89,85 @@ start_button.addEventListener(
         listener = new THREE.AudioListener();
         fps_camera.add( listener);
         await start_web();
+
     },
     false
 )
 
-// const params = {
-//     exposure: 1,
-//     bloomStrength: .3,
-//     bloomThreshold: 0,
-//     bloomRadius: .1,
-// };
-// const render_scene = new RenderPass( scene, fps_camera );
-// const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-// bloomPass.threshold = params.bloomThreshold;
-// bloomPass.strength = params.bloomStrength;
-// bloomPass.radius = params.bloomRadius;
+const on_key_down = (event) => {
+    switch (event.code) {
+        case 'KeyX':
+            switch_cam();
+            break;
+        case 'KeyC':
+            console_renderer_stats();
+            break;
+    }
+}
 
-// const outputPass = new OutputPass();
+const on_window_resize = () => {
 
-// // var copyPass = new ShaderPass( CopyShader );
-// // copyPass.renderToScreen = true;
+    fps_camera.aspect = window.innerWidth / window.innerHeight;
+    orbital_camera.aspect = window.innerWidth / window.innerHeight;
 
-// const composer = new EffectComposer( renderer );
-// composer.addPass( render_scene );
-// composer.addPass( bloomPass );
-// composer.addPass( outputPass );
-// // composer.addPass( copyPass );
+    fps_camera.updateProjectionMatrix();
+    orbital_camera.updateProjectionMatrix();
 
-// renderer.toneMappingExposure = Math.pow( 2, 4.0 );
-//Testing
-// const plane = new CANNON.Body({
-//     mass : 0,
-//     position : new CANNON.Vec3(0,0,0),
-//     shape : new CANNON.Plane()
-// });
-// plane.quaternion.setFromEuler(-Math.PI/2,0,0);
-// physics_world.addBody(plane);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
-// const box = new CANNON.Body({
-//     mass : 0,
-//     position : new CANNON.Vec3(4,2,4),
-// });
+    render();
+}
 
-// const shape_1 =  new CANNON.Box(new CANNON.Vec3(1,1,1));
-// const pos_1 = new CANNON.Vec3(-5,0,5);
-
-// const shape_2 =  new CANNON.Box(new CANNON.Vec3(1,1,1));
-// const pos_2 = new CANNON.Vec3(-5,0,2);
-
-// box.addShape(shape_1,pos_1);
-// box.addShape(shape_2,pos_2);
-
-// physics_world.addBody(box);
 
 fps_controls.addEventListener('lock', () => (menu_panel.style.display = 'none'));
 fps_controls.addEventListener('unlock', () => (menu_panel.style.display = 'block'));
 
-window.addEventListener('resize', onWindowResize, false);
+document.addEventListener('keydown', on_key_down, false);
+window.addEventListener('resize', on_window_resize, false);
+
+
+
+const sun = new THREE.Vector3();
+const sky = new Sky();
+
+sky.scale.setScalar( 10000 );
+scene.add( sky );
+
+const sky_uniforms = sky.material.uniforms;
+
+//Sky Configuration
+sky_uniforms[ 'turbidity' ].value = 10;
+sky_uniforms[ 'rayleigh' ].value = 2;
+sky_uniforms[ 'mieCoefficient' ].value = 0.005;
+sky_uniforms[ 'mieDirectionalG' ].value = 0.8;
+
+const parameters = {
+    elevation: 10,
+    azimuth: 180
+};
+
+const pmrem_generator = new THREE.PMREMGenerator( renderer );
+const scene_env = new THREE.Scene();
+
 async function start_web(){
 
     //Load Models
     await load_all_models();
 
-    world = new World(scene,physics_world,listener);
+    // await new Promise(resolve => {
+    //     setTimeout(resolve, 5000); 
+    //   });
+
+    world = new World(scene,physics_world,fps_camera,listener);
     world.build_scene();
 
     //Event Handling
     event_emitter.on('update',world.update_objects.bind(world));
 
     //Player
-    player = new Player(physics_world,fps_camera,new CANNON.Vec3(0,5,2));
-    player.create_input_events(document);
+    player = new Player(physics_world,fps_camera,new CANNON.Vec3(7,0,-.5),new CANNON.Quaternion(0,.7,0,.65));
 
-    //testing 
-    // const _model = get_collider("small_tower");
-    // console.log("Mode Scale : ",_model.children[0].scale);
-    // const boundingBox = new THREE.Box3();
-    // boundingBox.setFromObject(_model); // 'model' is your Three.js 3D model
-    
-    // const size = new THREE.Vector3();
-    // boundingBox.getSize(size);
-    // console.log("Model size: ", size);
-    
-    // const _boombox = new CANNON.Body({
-    //     mass : 5,
-    //     type : CANNON.Body.STATIC,
-    //     shape : new CANNON.Box(size),
-    //     position : new CANNON.Vec3(-5,0,0), 
-    // });
-    // physics_world.addBody(_boombox);
-
-    const on_key_down = (event) => {
-        switch (event.code) {
-            case 'KeyX':
-                switch_cam();
-                break;
-        }
-    }
-
-    document.addEventListener('keydown', on_key_down, false)
-
-}
-
-
-function onWindowResize() {
-    fps_camera.aspect = window.innerWidth / window.innerHeight;
-    orbital_camera.aspect = window.innerWidth / window.innerHeight;
-    fps_camera.updateProjectionMatrix();
-    orbital_camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    render();
-}
-
-// const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // Color: white, Intensity: 1
-// directionalLight.position.set(1, 1, 1); // Set the light's direction
-// scene.add(directionalLight);
-
-const ambientLight = new THREE.AmbientLight(0x404040); 
-ambientLight.intensity = 10;
-scene.add(ambientLight);
-
-// const skybox = get_skybox_mesh("bluecloud");
-// scene.add(skybox);
-// Create an animation loop
-
-
-let lastCallTime = performance.now() / 1000
-function animate () {
-    requestAnimationFrame(animate);    
-    stats.begin();
-
-    const delta = clock.getDelta();
-    const time =  performance.now() / 1000;
-    update_delta_time(time - lastCallTime);
-    lastCallTime = time
-    // controls.update(delta);
-
-    
-    physics_world.step(1 / 60);
-    if(SHOW_PHY_DEBUG) cannon_debugger.update();
-    
-    event_emitter.emit('update');
-
-    // composer.render();
-    render();
-    stats.end();
-}
-
-function render(){
-    renderer.render(scene, get_active_cam());
-}
-function get_active_cam(){
-    return (is_fps_active) ? fps_camera : orbital_camera;
+    console.log("Player : ",player);
 }
 
 function switch_cam(){
@@ -260,10 +185,60 @@ function switch_cam(){
         menu_panel.style.display = 'none';
     }
 }
+function render(){
+    renderer.render(scene, get_active_cam());
+}
+function get_active_cam(){
+    return (is_fps_active) ? fps_camera : orbital_camera;
+}
+function console_renderer_stats(){
+    console.log("Scene polycount:", renderer.info.render.triangles);
+    console.log("Active Drawcalls:", renderer.info.render.calls);
+    console.log("Textures in Memory", renderer.info.memory.textures);
+    console.log("Geometries in Memory", renderer.info.memory.geometries);
+}
 
+function update_sun() {
 
+    const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
+    const theta = THREE.MathUtils.degToRad( parameters.azimuth );
 
+    sun.setFromSphericalCoords( 1, phi, theta );
 
+    sky.material.uniforms[ 'sunPosition' ].value.copy( sun );
 
-// Call the animate function to start the animation loop
+    if ( render_target !== undefined ) render_target.dispose();
+
+    scene_env.add( sky );
+    render_target = pmrem_generator.fromScene( scene_env );
+    scene.add( sky );
+
+    scene.environment = render_target.texture;
+
+}
+
+function animate () {
+
+    requestAnimationFrame(animate);    
+    physics_world.step(1 / 60);
+
+    //Stats
+    stats.begin();
+
+    //Delta Calculation
+    const time =  performance.now() / 1000;
+    update_delta_time(time - last_call_time);
+    last_call_time = time
+
+    //Physics Debugger
+    if(SHOW_PHY_DEBUG) cannon_debugger.update();
+    
+    //Rendering
+    render();
+    
+    //Stats
+    stats.end();
+}
+
+update_sun();
 animate();

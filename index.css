@@ -23,7 +23,7 @@ body {
 }
 
 #hint-text {
-    display: block;
+    display: none;
     position: absolute;
     bottom: 10px;
     right: 50px;
@@ -33,3 +33,15 @@ body {
     border-radius: 5px;
   }
 
+  #cross-hair {
+    width: 5px;
+    height: 5px;
+    background-color: black;
+    border-radius: 50%;
+    position: absolute;
+    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); 
+  }
+  
