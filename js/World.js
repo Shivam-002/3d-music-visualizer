@@ -4,6 +4,8 @@ import Props from "./objects/props";
 import Speaker from "./objects/Speaker";
 import Clock from "./objects/Clock";
 import Board from "./objects/Board";
+import Sign from "./objects/Sign";
+import { SONG_DIR } from "./utils/Utils";
 
 export default class World{
     constructor(scene,physics_world,camera,listener){
@@ -45,10 +47,25 @@ export default class World{
         //Clock
         const clock = new Clock(boom_box).build(this.scene,this.physics_world);
         this.objects.push(clock);
-
-        //Board
-        const board = new Board().build(this.scene,this.physics_world);
         
+        const sign_1 = new Sign(
+                                boom_box,
+                                false,
+                                SONG_DIR.NEXT,
+                                new CANNON.Vec3(3,-.1,-6.25),
+                                new CANNON.Quaternion().setFromEuler(0,45,0),
+                            )
+                            .build(this.scene,this.physics_world);
+
+        const sign_2 = new Sign(
+                                boom_box,
+                                true,
+                                SONG_DIR.PREV,
+                                new CANNON.Vec3(3,-.3,6.25),
+                                new CANNON.Quaternion().setFromEuler(-0,-45,0),
+                            )
+                            .build(this.scene,this.physics_world);
+
     }
 
     //Frame Update

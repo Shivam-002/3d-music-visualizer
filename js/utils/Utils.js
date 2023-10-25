@@ -43,6 +43,9 @@ function mesh_to_shape(mesh){
 
     return shape;
 }
-
+export const SONG_DIR = {
+    PREV : 0,
+    NEXT : 1
+}
 
 export function get_glow_shader(){return glow_shader.clone();}

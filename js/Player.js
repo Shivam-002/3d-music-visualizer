@@ -125,11 +125,7 @@ export default class Player{
 
         const frontDirection = new THREE.Vector3(0, 0, -1);
         frontDirection.applyQuaternion(cameraQuaternion);
-        
 
-        //
-
-        // Set the listener's orientation in Howler.js using the frontDirection vector
         Howler.orientation(frontDirection.x, frontDirection.y, frontDirection.z, 0, 1, 0);
     }   
     head_bobing(){

@@ -5,10 +5,11 @@ import * as CANNON from "cannon-es";
 import { get_collider, get_model } from "../utils/modelloader";
 import { add_interactable_objects } from "../Handler";
 import Hint from "../utils/Hint";
-import AudioHandler from '../AudioHandler';
-import create_rb from '../utils/Utils';
+import create_rb, { SONG_DIR } from '../utils/Utils';
 
 const DEFAULT_VOLUME = .1;
+
+
 
 export default class Speaker {
     constructor(boom_box,is_clone=false,position,quaternion){
@@ -41,38 +42,30 @@ export default class Speaker {
         this.rb.quaternion.copy(quaternion);
         this.model.quaternion.copy(quaternion);
 
-        console.log("Speaker pos : ",this.model.position," rb : ", this.rb.position);
-        console.log("Speaker quad : ",this.model.quaternion," rb : ", this.rb.quaternion);
+        // console.log("Speaker pos : ",this.model.position," rb : ", this.rb.position);
+        // console.log("Speaker quad : ",this.model.quaternion," rb : ", this.rb.quaternion);
         boom_box.add_speaker(this);
 
-        this.volume = DEFAULT_VOLUME
-        this.song = new Howl({
-            src : AudioHandler.get_songs(),
-            volume : this.volume
-        })
+        this.volume = DEFAULT_VOLUME;
 
-        this.id = this.song.play();
-
-        this.song.pause();
-
-        this.song.pannerAttr({
-            panningModel: 'HRTF',
-            refDistance: 5,
-            rolloffFactor: 2,
-            distanceModel: 'exponential'
-          }, this.id);
-
-        this.song.pos(this.rb.position.x,this.rb.position.y,this.rb.position.z,this.id);
+        this.playlist = [
+            {
+                title : "Faded By Alan Walker",
+                file : 'fade',
+                howl : null,
+            },
+            {
+                title : "Play Date",
+                file : 'play_date',
+                howl : null,
+            },
+        ];
+        this.index = 0;
+        this.id = 0;
 
         this.on_scroll = (event)=>{
             const amount = (event.deltaY<0) ? .01 : -.01;
-
-            this.volume += amount;
-            this.volume = Math.max(0, Math.min(1, this.volume));
-            this.song.volume(this.volume,this.id);
-
-            this.hinted = true;
-            this.display_hint();
+            this.change_volume(amount);
         }
 
         this.on_scroll = this.on_scroll.bind(this);
@@ -81,24 +74,80 @@ export default class Speaker {
         
 
     }
+    play(index){
+        var song;
 
-    play(){
-        this.song.play();
-    }
-    stop(){
-        this.song.stop();
+        index = typeof index === 'number' ? index : this.index;
+        var data = this.playlist[index];
+
+        if (data.howl) {
+            song = data.howl;
+        } else {
+            song = data.howl = new Howl({
+                src: ['./assets/songs/' + data.file + '.mp3'],
+
+            });
+        }
+        this.id = song.play();
+        song.volume(this.volume,this.id);
+        song.pos(this.rb.position.x,this.rb.position.y,this.rb.position.z,this.id); 
+        song.pannerAttr({
+            panningModel: 'HRTF',
+            refDistance: 5,
+            rolloffFactor: 2,
+            distanceModel: 'exponential'
+        },this.id);
+        this.index = index;
     }
     pause(){
-        this.song.pause();
+        var song = this.playlist[this.index].howl;
+        song.pause();
     }
+
+    skip(direction){
+        var index = 0;
+        if (direction === SONG_DIR.PREV) {
+          index = this.index - 1;
+          if (index < 0) {
+            index = this.playlist.length - 1;
+          }
+        } else {
+          index = this.index + 1;
+          if (index >= this.playlist.length) {
+            index = 0;
+          }
+        }
+
+        this.skip_to(index);
+    }
+    skip_to(index){
+        if (this.playlist[this.index].howl) {
+            this.playlist[this.index].howl.stop();  
+        }
+    
+        this.play(index);
+    }
+
+    change_volume(amount=0){
+
+        this.volume += amount;
+        this.volume = Math.max(0, Math.min(1, this.volume));
+
+        const song = this.playlist[this.index].howl;
+        song.volume(this.volume,this.id);
+
+        this.hinted = true;
+        this.display_hint();
+    }
+
     seek(amount){
-        const current_time = this.song.seek();
+        const song = this.playlist[this.index].howl;
+        const current_time = song.seek();        
         var new_time = current_time + amount;
-  
-        const duration = this.song.duration();
+        const duration = song.duration();
         new_time = Math.max(0, Math.min(new_time, duration));
         
-        this.song.seek(new_time);
+        song.seek(new_time);
     }
 
     build(scene,physics_world){

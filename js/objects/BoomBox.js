@@ -1,5 +1,5 @@
 import * as CANNON from "cannon-es";
-import create_rb from "../utils/Utils";
+import create_rb, { SONG_DIR } from "../utils/Utils";
 import { get_collider, get_model } from "../utils/modelloader";
 import { add_interactable_objects } from "../Handler";
 import Hint from "../utils/Hint";
@@ -107,5 +107,15 @@ export default class BoomBox {
         }
     }
 
+    next_song(){
+        for(const speaker of this.speakers){
+            speaker.skip(SONG_DIR.NEXT);
+        }
+    }
 
+    prev_song(){
+        for(const speaker of this.speakers){
+            speaker.skip(SONG_DIR.PREV);
+        }
+    }
 }

@@ -52,6 +52,12 @@ const models = [
         model : true,
         collider : true,
         interactable: false,
+    },
+    {
+        name : 'sign',
+        model : true,
+        collider : true,
+        interactable : true,
     }
 ]
 

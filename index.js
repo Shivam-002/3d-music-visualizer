@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import * as CANNON from "cannon-es";
 
 
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import CannonDebugger from 'cannon-es-debugger';
@@ -40,20 +39,12 @@ document.getElementById('canvas-container').appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 
 // Create cameras
-const fps_camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const orbital_camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-var is_fps_active = true;
+const player_cam = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-orbital_camera.position.set(0,10,10);
-fps_camera.position.set(0,10,0);
-
-//Orbital Camera Controls
-const orbital_controls = new OrbitControls(orbital_camera, renderer.domElement);
-orbital_controls.movementSpeed = 100;
-orbital_controls.lookSpeed = 0.05;
+player_cam.position.set(0,10,0);
 
 //FPS Camera Controls
-const fps_controls = new PointerLockControls(fps_camera,renderer.domElement);
+const fps_controls = new PointerLockControls(player_cam,renderer.domElement);
 scene.add(fps_controls.getObject());
 
 // 0: FPS
@@ -87,7 +78,7 @@ start_button.addEventListener(
 
         //Listener
         listener = new THREE.AudioListener();
-        fps_camera.add( listener);
+        player_cam.add( listener);
         await start_web();
 
     },
@@ -96,9 +87,6 @@ start_button.addEventListener(
 
 const on_key_down = (event) => {
     switch (event.code) {
-        case 'KeyX':
-            switch_cam();
-            break;
         case 'KeyC':
             console_renderer_stats();
             break;
@@ -107,11 +95,9 @@ const on_key_down = (event) => {
 
 const on_window_resize = () => {
 
-    fps_camera.aspect = window.innerWidth / window.innerHeight;
-    orbital_camera.aspect = window.innerWidth / window.innerHeight;
+    player_cam.aspect = window.innerWidth / window.innerHeight;
 
-    fps_camera.updateProjectionMatrix();
-    orbital_camera.updateProjectionMatrix();
+    player_cam.updateProjectionMatrix();
 
     renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -158,39 +144,23 @@ async function start_web(){
     //     setTimeout(resolve, 5000); 
     //   });
 
-    world = new World(scene,physics_world,fps_camera,listener);
+    world = new World(scene,physics_world,player_cam,listener);
     world.build_scene();
 
     //Event Handling
     event_emitter.on('update',world.update_objects.bind(world));
 
     //Player
-    player = new Player(physics_world,fps_camera,new CANNON.Vec3(7,0,-.5),new CANNON.Quaternion(0,.7,0,.65));
+    player = new Player(physics_world,player_cam,new CANNON.Vec3(7,0,-.5),new CANNON.Quaternion(0,.7,0,.65));
 
     console.log("Player : ",player);
 }
 
-function switch_cam(){
-    is_fps_active = !is_fps_active;
-    if(is_fps_active){
-        scene.remove(orbital_camera);
-        scene.add(fps_camera);
-        start_button.style.display = 'block';
-        menu_panel.style.display = 'block';
-    }else{
-        fps_controls.unlock();
-        scene.remove(fps_camera);
-        scene.add(orbital_camera);
-        start_button.style.display = 'none';
-        menu_panel.style.display = 'none';
-    }
-}
+
 function render(){
-    renderer.render(scene, get_active_cam());
+    renderer.render(scene, player_cam);
 }
-function get_active_cam(){
-    return (is_fps_active) ? fps_camera : orbital_camera;
-}
+
 function console_renderer_stats(){
     console.log("Scene polycount:", renderer.info.render.triangles);
     console.log("Active Drawcalls:", renderer.info.render.calls);
